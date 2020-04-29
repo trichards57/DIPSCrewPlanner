@@ -69,11 +69,14 @@ namespace DIPSCrewPlanner.DIPS
 
             var config = Configuration.Default.WithDefaultLoader();
             context = BrowsingContext.New(config);
-            var loginDoc = await context.OpenAsync("https://dips.sja.org.uk/");
+            var loginDoc = await context.OpenAsync("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f");
 
             var viewState = loginDoc.QuerySelector("#__VIEWSTATE") as IHtmlInputElement;
             var viewStateGenerator = loginDoc.QuerySelector("#__VIEWSTATEGENERATOR") as IHtmlInputElement;
             var eventValidation = loginDoc.QuerySelector("#__EVENTVALIDATION") as IHtmlInputElement;
+
+            if (viewState == null || viewStateGenerator == null || eventValidation == null)
+                return false;
 
             var requestString = new Dictionary<string, string>()
             {
@@ -93,7 +96,7 @@ namespace DIPSCrewPlanner.DIPS
             client = new HttpClient(handler);
             using (var content = new FormUrlEncodedContent(requestString))
             {
-                await client.PostAsync(new Uri("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f"), content);
+                var res = await client.PostAsync(new Uri("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f"), content);
             }
 
             return handler.CookieContainer.Count > 0;

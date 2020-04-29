@@ -9,6 +9,11 @@ namespace DIPSCrewPlanner
         {
         }
 
+        private void SetupCredentialsButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.ThisAddIn.SetDipsCredentials();
+        }
+
         private void SetupSheetButton_Click(object sender, RibbonControlEventArgs e)
         {
             var result = MessageBox.Show("This will set up a new crew planner sheet.  It will result in you losing any data currently in this workbook.  It would be wise to close any other workbooks.  Are you sure you want to continue?", "Warning: Data Loss", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);

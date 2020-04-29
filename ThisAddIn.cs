@@ -1,7 +1,11 @@
-﻿using DIPSCrewPlanner.Model;
+﻿using DIPSCrewPlanner.DIPS;
+using DIPSCrewPlanner.Model;
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Drawing;
+using System.IO;
+using System.Text.Json;
+using System.Windows.Forms;
 
 namespace DIPSCrewPlanner
 {
@@ -10,9 +14,77 @@ namespace DIPSCrewPlanner
         private const string EventCacheSheetName = "EventCache";
         private const string PeopleCacheSheetName = "PeopleCache";
         private const string SheetDateFormat = "dddd ddMMyy";
+        private string _settingsFolder;
+        private string _settingsPath;
+        public Credentials Credentials { get; private set; }
 
-        public void SetDipsCredentials()
+        public async void SetDipsCredentials()
         {
+            try
+            {
+                Application.Cursor = XlMousePointer.xlWait;
+
+                var form = new DipsCredentialsForm();
+                form.Credentials = Credentials;
+
+                bool tryAgain;
+
+                do
+                {
+                    tryAgain = false;
+                    var res = form.ShowDialog();
+
+                    if (res == DialogResult.OK)
+                    {
+                        var credentials = form.Credentials;
+                        var client = new DipsClient(credentials);
+
+                        var swrSuccess = await client.Login(true);
+                        var wmrSuccess = await client.Login(false);
+
+                        if (!swrSuccess && !wmrSuccess)
+                        {
+                            MessageBox.Show("Neither your WMR nor your SWR password worked.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            tryAgain = true;
+                        }
+                        else if (!wmrSuccess)
+                        {
+                            MessageBox.Show("Your WMR password did not work.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            tryAgain = true;
+                        }
+                        else if (!swrSuccess)
+                        {
+                            MessageBox.Show("Your SWR password did not work.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            tryAgain = true;
+                        }
+                        else
+                        {
+                            Credentials = form.Credentials;
+                            var saveRes = MessageBox.Show("Log in successful.  Do you want to save your credentials for next time?  Do not do this on a shared or unsecure PC.", "Log In Success", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                            if (saveRes == DialogResult.Yes)
+                            {
+                                try
+                                {
+                                    if (!Directory.Exists(_settingsFolder))
+                                        Directory.CreateDirectory(_settingsFolder);
+
+                                    var credentialsFile = JsonSerializer.Serialize(Credentials);
+                                    File.WriteAllText(_settingsPath, credentialsFile);
+                                }
+                                catch (SystemException)
+                                {
+                                    MessageBox.Show("There was a problem saving your credentials.  You will have to try again next time.");
+                                }
+                            }
+                        }
+                    }
+                } while (tryAgain);
+            }
+            finally
+            {
+                Application.Cursor = XlMousePointer.xlDefault;
+            }
         }
 
         public void SetupBook()
@@ -109,6 +181,21 @@ namespace DIPSCrewPlanner
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            _settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DIPSCrewPlanner");
+            _settingsPath = Path.Combine(_settingsFolder, "credentials.json");
+
+            if (File.Exists(_settingsPath))
+            {
+                try
+                {
+                    var creds = File.ReadAllText(_settingsPath);
+                    Credentials = JsonSerializer.Deserialize<Credentials>(creds);
+                }
+                catch (SystemException)
+                {
+                    MessageBox.Show("There was a problem loading your DIPS credentials.  You will need to re-enter them.", "Error Loading Credentials", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         #region VSTO generated code
@@ -119,8 +206,8 @@ namespace DIPSCrewPlanner
         /// </summary>
         private void InternalStartup()
         {
-            this.Startup += new System.EventHandler(ThisAddIn_Startup);
-            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            Startup += new System.EventHandler(ThisAddIn_Startup);
+            Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
         }
 
         #endregion VSTO generated code
