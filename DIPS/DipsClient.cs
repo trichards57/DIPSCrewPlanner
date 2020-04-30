@@ -1,5 +1,6 @@
 ﻿using AngleSharp;
 using AngleSharp.Html.Dom;
+using DIPSCrewPlanner.Model;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -12,7 +13,10 @@ namespace DIPSCrewPlanner.DIPS
     {
         private readonly Credentials _creds;
         private readonly Regex CyclingHoursRegex = new Regex(@"Cycle responder operational hours<\/td>.+?([\d\.]+) Hrs<\/td>", RegexOptions.Compiled | RegexOptions.Singleline);
+
+        //private readonly Regex PersonEntry = new Regex
         private bool _usingSwr = false;
+
         private HttpClient client;
         private IBrowsingContext context;
         private HttpClientHandler handler;
@@ -44,6 +48,28 @@ namespace DIPSCrewPlanner.DIPS
                 else
                     _creds.WmrDipsUsername = value;
             }
+        }
+
+        public async Task<IEnumerable<Person>> GetEMTs()
+        {
+            var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/FindMemberCountyWide.asp?lookuptype=lookup&region=true&MI=");
+            var parameters = new Dictionary<string, string>() {
+                {"area", "all" },
+                {"division", "all" },
+                {"badge", "" },
+                {"PIN", "" },
+                {"firstname", "" },
+                {"surname", "" },
+                {"rank", "all" },
+                {"role", "ETA" },
+                {"driving", "all" },
+                {"drivingskills", "all" },
+            };
+            var queryData = new FormUrlEncodedContent(parameters);
+
+            var result = await client.PostAsync(uri, queryData);
+
+            var parser =
         }
 
         public async Task<decimal> GetHours(int year, string dipsId)

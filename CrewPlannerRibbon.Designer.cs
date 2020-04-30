@@ -38,6 +38,7 @@
             this.group1 = this.Factory.CreateRibbonGroup();
             this.SetupSheetButton = this.Factory.CreateRibbonButton();
             this.SetupCredentialsButton = this.Factory.CreateRibbonButton();
+            this.UpdateVolunteerListButton = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.SuspendLayout();
@@ -53,6 +54,7 @@
             // 
             this.group1.Items.Add(this.SetupSheetButton);
             this.group1.Items.Add(this.SetupCredentialsButton);
+            this.group1.Items.Add(this.UpdateVolunteerListButton);
             this.group1.Label = "Setup";
             this.group1.Name = "group1";
             // 
@@ -69,6 +71,12 @@
             this.SetupCredentialsButton.Label = "Setup Credentials";
             this.SetupCredentialsButton.Name = "SetupCredentialsButton";
             this.SetupCredentialsButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.SetupCredentialsButton_Click);
+            // 
+            // UpdateVolunteerListButton
+            // 
+            this.UpdateVolunteerListButton.Enabled = false;
+            this.UpdateVolunteerListButton.Label = "Update Volunteer List";
+            this.UpdateVolunteerListButton.Name = "UpdateVolunteerListButton";
             // 
             // CrewPlannerRibbon
             // 
@@ -90,6 +98,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton SetupSheetButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton SetupCredentialsButton;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton UpdateVolunteerListButton;
     }
 
     partial class ThisRibbonCollection

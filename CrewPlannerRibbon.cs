@@ -5,6 +5,18 @@ namespace DIPSCrewPlanner
 {
     public partial class CrewPlannerRibbon
     {
+        public void DisableControls()
+        {
+            UpdateVolunteerListButton.Enabled = false;
+            UpdateVolunteerListButton.SuperTip = "You need to set your Credentials first.";
+        }
+
+        public void EnableControls()
+        {
+            UpdateVolunteerListButton.Enabled = true;
+            UpdateVolunteerListButton.SuperTip = string.Empty;
+        }
+
         private void CrewPlannerRibbon_Load(object sender, RibbonUIEventArgs e)
         {
         }

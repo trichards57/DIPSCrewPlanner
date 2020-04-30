@@ -14,9 +14,22 @@ namespace DIPSCrewPlanner
         private const string EventCacheSheetName = "EventCache";
         private const string PeopleCacheSheetName = "PeopleCache";
         private const string SheetDateFormat = "dddd ddMMyy";
+        private Credentials _credentials;
         private string _settingsFolder;
         private string _settingsPath;
-        public Credentials Credentials { get; private set; }
+
+        public Credentials Credentials
+        {
+            get { return _credentials; }
+            private set
+            {
+                _credentials = value;
+                if (value != null)
+                    Globals.Ribbons.CrewPlannerRibbon.EnableControls();
+                else
+                    Globals.Ribbons.CrewPlannerRibbon.DisableControls();
+            }
+        }
 
         public async void SetDipsCredentials()
         {
@@ -183,6 +196,8 @@ namespace DIPSCrewPlanner
         {
             _settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DIPSCrewPlanner");
             _settingsPath = Path.Combine(_settingsFolder, "credentials.json");
+
+            Credentials = null;
 
             if (File.Exists(_settingsPath))
             {
