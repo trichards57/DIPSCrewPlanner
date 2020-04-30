@@ -258,7 +258,7 @@
     <ManifestKeyFile>DIPSCrewPlanner_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>0532617524BB6F0457DF6B7692DCF3D13278EC5C</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>55A0ADA60778DD529D4985768505F714D9FE4D83</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -2,8 +2,10 @@
 using DIPSCrewPlanner.Model;
 using Microsoft.Office.Interop.Excel;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Windows.Forms;
 
@@ -12,7 +14,9 @@ namespace DIPSCrewPlanner
     public partial class ThisAddIn
     {
         private const string EventCacheSheetName = "EventCache";
+        private const string PeopleArea = "PeopleArea";
         private const string PeopleCacheSheetName = "PeopleCache";
+        private const string PeopleNamesArea = "PeopleNames";
         private const string SheetDateFormat = "dddd ddMMyy";
         private Credentials _credentials;
         private string _settingsFolder;
@@ -114,6 +118,15 @@ namespace DIPSCrewPlanner
 
             Worksheet previousSheet = null;
 
+            Worksheet eventsCache = Application.ActiveWorkbook.Worksheets.Add();
+            eventsCache.Name = EventCacheSheetName;
+
+            Worksheet peopleCache = Application.ActiveWorkbook.Worksheets.Add(After: eventsCache);
+            peopleCache.Name = PeopleCacheSheetName;
+
+            Application.Names.Add(PeopleNamesArea, peopleCache.Range["A1"]);
+            Application.Names.Add(PeopleArea, peopleCache.Range["A1:F1"]);
+
             for (var i = DateTime.Today; i < DateTime.Today.AddMonths(1); i = i.AddDays(1))
             {
                 Worksheet newSheet;
@@ -128,21 +141,68 @@ namespace DIPSCrewPlanner
                 previousSheet = newSheet;
             }
 
-            Worksheet eventsCache = Application.ActiveWorkbook.Worksheets.Add(After: previousSheet);
-            eventsCache.Name = EventCacheSheetName;
-            previousSheet = eventsCache;
-
-            Worksheet peopleCache = Application.ActiveWorkbook.Worksheets.Add(After: previousSheet);
-            peopleCache.Name = PeopleCacheSheetName;
-
             Application.ActiveWorkbook.Worksheets[lastSheetToRemove].Delete();
+        }
+
+        public async void UpdatePeopleList()
+        {
+            try
+            {
+                Application.Cursor = XlMousePointer.xlWait;
+                var client = new DipsClient(Credentials);
+                await client.Login(true);
+                var swrResult = await client.GetEMTs();
+                await client.Login(false);
+                var wmrResult = await client.GetEMTs();
+
+                var people = Enumerable.Concat(swrResult, wmrResult);
+
+                var currentRow = 0;
+                var cacheSheet = Application.Worksheets.OfType<Worksheet>().FirstOrDefault(s => s.Name == PeopleCacheSheetName);
+
+                if (cacheSheet == null)
+                {
+                    cacheSheet = Application.Worksheets.Add();
+                    cacheSheet.Name = PeopleCacheSheetName;
+                }
+
+                var displayNameSet = new HashSet<string>();
+
+                foreach (var person in people.OrderBy(p => p.LastName).ThenBy(p => p.FirstName))
+                {
+                    currentRow++;
+
+                    var count = 1;
+                    var displayName = person.DisplayName;
+                    while (displayNameSet.Contains(displayName))
+                    {
+                        count++;
+                        displayName = $"{person.DisplayName} {count}";
+                    }
+                    displayNameSet.Add(displayName);
+
+                    cacheSheet.Range[$"A{currentRow}"].Value = displayName;
+                    cacheSheet.Range[$"B{currentRow}"].Value = person.DipsId;
+                    cacheSheet.Range[$"C{currentRow}"].Value = person.DipsContext.ToString();
+                    cacheSheet.Range[$"D{currentRow}"].Value = person.UnitName;
+                    cacheSheet.Range[$"E{currentRow}"].Value = person.FirstName;
+                    cacheSheet.Range[$"F{currentRow}"].Value = person.LastName;
+                }
+
+                Application.Names.Add(PeopleNamesArea, cacheSheet.Range[$"A1:A{currentRow}"]);
+                Application.Names.Add(PeopleArea, cacheSheet.Range[$"A1:I{currentRow}"]);
+            }
+            finally
+            {
+                Application.Cursor = XlMousePointer.xlDefault;
+            }
         }
 
         private void SetupDaySheet(DateTime date, Worksheet worksheet)
         {
             worksheet.Name = date.ToString(SheetDateFormat);
 
-            var titleRange = worksheet.Range["A1:G1"];
+            var titleRange = worksheet.Range["A1:I1"];
             titleRange.Merge();
             titleRange.Font.Size = 24;
             titleRange.Borders.LineStyle = XlLineStyle.xlContinuous;
@@ -157,20 +217,24 @@ namespace DIPSCrewPlanner
             worksheet.Columns[3].ColumnWidth = 6.89;
             worksheet.Columns[4].ColumnWidth = 21.22;
             worksheet.Columns[5].ColumnWidth = 21.22;
-            worksheet.Columns[6].ColumnWidth = 9.22;
-            worksheet.Columns[7].ColumnWidth = 9.22;
+            worksheet.Columns[6].ColumnWidth = 21.22;
+            worksheet.Columns[7].ColumnWidth = 21.22;
+            worksheet.Columns[8].ColumnWidth = 9.22;
+            worksheet.Columns[9].ColumnWidth = 9.22;
 
             worksheet.Range["A3"].Value = "Hub";
             worksheet.Range["B3"].Value = "DIPS Reference";
             worksheet.Range["C3"].Value = "Vehicle";
             worksheet.Range["D3"].Value = "Driver";
-            worksheet.Range["E3"].Value = "Attendant";
-            worksheet.Range["F3"].Value = "Start Time";
-            worksheet.Range["G3"].Value = "End Time";
-            worksheet.Range["A3:G3"].Font.Bold = true;
-            worksheet.Range["A3:G3"].Borders.LineStyle = XlLineStyle.xlContinuous;
-            worksheet.Range["A3:G3"].Borders.Weight = 2;
-            worksheet.Range["A3:G3"].Interior.Color = ColorTranslator.ToOle(Color.FromArgb(198, 224, 180));
+            worksheet.Range["E3"].Value = "Driver Unit";
+            worksheet.Range["F3"].Value = "Attendant";
+            worksheet.Range["G3"].Value = "Attendant Unit";
+            worksheet.Range["H3"].Value = "Start Time";
+            worksheet.Range["I3"].Value = "End Time";
+            worksheet.Range["A3:I3"].Font.Bold = true;
+            worksheet.Range["A3:I3"].Borders.LineStyle = XlLineStyle.xlContinuous;
+            worksheet.Range["A3:I3"].Borders.Weight = 2;
+            worksheet.Range["A3:I3"].Interior.Color = ColorTranslator.ToOle(Color.FromArgb(198, 224, 180));
 
             var startRow = 4;
 
@@ -180,8 +244,12 @@ namespace DIPSCrewPlanner
                 {
                     worksheet.Range[$"A{startRow}"].Value = details.DisplayName;
                     worksheet.Range[$"A{startRow}"].Font.Bold = true;
-                    worksheet.Range[$"A{startRow}:G{startRow}"].Borders.LineStyle = XlLineStyle.xlContinuous;
-                    worksheet.Range[$"A{startRow}:G{startRow}"].Borders.Weight = 2;
+                    worksheet.Range[$"A{startRow}:I{startRow}"].Borders.LineStyle = XlLineStyle.xlContinuous;
+                    worksheet.Range[$"A{startRow}:I{startRow}"].Borders.Weight = 2;
+                    worksheet.Range[$"D{startRow}"].Validation.Add(XlDVType.xlValidateList, Formula1: $"={PeopleNamesArea}");
+                    worksheet.Range[$"E{startRow}"].FormulaLocal = $"=VLOOKUP(D{startRow},{PeopleArea},4,FALSE)";
+                    worksheet.Range[$"F{startRow}"].Validation.Add(XlDVType.xlValidateList, Formula1: $"={PeopleNamesArea}");
+                    worksheet.Range[$"G{startRow}"].FormulaLocal = $"=VLOOKUP(F{startRow},{PeopleArea},4,FALSE)";
                     startRow++;
                 }
                 startRow++;

@@ -77,6 +77,7 @@
             this.UpdateVolunteerListButton.Enabled = false;
             this.UpdateVolunteerListButton.Label = "Update Volunteer List";
             this.UpdateVolunteerListButton.Name = "UpdateVolunteerListButton";
+            this.UpdateVolunteerListButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.UpdateVolunteerListButton_Click);
             // 
             // CrewPlannerRibbon
             // 

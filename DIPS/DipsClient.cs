@@ -3,6 +3,7 @@ using AngleSharp.Html.Dom;
 using DIPSCrewPlanner.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -14,7 +15,6 @@ namespace DIPSCrewPlanner.DIPS
         private readonly Credentials _creds;
         private readonly Regex CyclingHoursRegex = new Regex(@"Cycle responder operational hours<\/td>.+?([\d\.]+) Hrs<\/td>", RegexOptions.Compiled | RegexOptions.Singleline);
 
-        //private readonly Regex PersonEntry = new Regex
         private bool _usingSwr = false;
 
         private HttpClient client;
@@ -69,7 +69,63 @@ namespace DIPSCrewPlanner.DIPS
 
             var result = await client.PostAsync(uri, queryData);
 
-            var parser =
+            if (!result.IsSuccessStatusCode)
+                return Enumerable.Empty<Person>();
+
+            var pageContent = await result.Content.ReadAsStringAsync();
+
+            var config = Configuration.Default;
+            var context = BrowsingContext.New(config);
+            var document = await context.OpenAsync(r => r.Content(pageContent));
+
+            var tableRows = document.QuerySelectorAll("tr.smallnormal:not([bgcolor=\"pink\"])");
+
+            var peopleList = new List<Person>();
+
+            foreach (IHtmlTableRowElement row in tableRows)
+            {
+                var role = row.Children[2].TextContent;
+
+                if (role == "Advanced First Aider" || role == "First Aider" || role == "Not Operational" || role == "Support Member")
+                    continue;
+
+                var name = row.Children[0].Children[0].TextContent;
+
+                if (name.StartsWith("External Ambulance Crew") || name.StartsWith("Ambulance Service"))
+                    continue;
+
+                var unitName = row.Children[4].TextContent;
+
+                if (unitName.Contains("DO NOT USE"))
+                    continue;
+
+                var clickLink = row.Children[0].Children[0].Attributes["onclick"]?.Value;
+                if (clickLink == null)
+                {
+                    clickLink = row.Children[0].Children[0].Attributes["href"].Value;
+                    clickLink = clickLink.Split(new[] { '(', ')', ',' })[1].Trim('\'');
+                }
+
+                var dipsIdString = clickLink.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries).Last().Trim('\'', '"', ' ');
+                var parseSuccess = int.TryParse(dipsIdString, out var dipsId);
+                if (!parseSuccess)
+                    continue;
+
+                var nameParts = name.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+
+                var person = new Person
+                {
+                    FirstName = nameParts[0],
+                    LastName = nameParts[1],
+                    DipsId = dipsId,
+                    UnitName = unitName,
+                    DipsContext = _usingSwr ? DipsContext.SWR : DipsContext.WMR
+                };
+
+                peopleList.Add(person);
+            }
+
+            return peopleList;
         }
 
         public async Task<decimal> GetHours(int year, string dipsId)
@@ -97,11 +153,9 @@ namespace DIPSCrewPlanner.DIPS
             context = BrowsingContext.New(config);
             var loginDoc = await context.OpenAsync("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f");
 
-            var viewState = loginDoc.QuerySelector("#__VIEWSTATE") as IHtmlInputElement;
-            var viewStateGenerator = loginDoc.QuerySelector("#__VIEWSTATEGENERATOR") as IHtmlInputElement;
-            var eventValidation = loginDoc.QuerySelector("#__EVENTVALIDATION") as IHtmlInputElement;
-
-            if (viewState == null || viewStateGenerator == null || eventValidation == null)
+            if (!(loginDoc.QuerySelector("#__VIEWSTATE") is IHtmlInputElement viewState)
+                || !(loginDoc.QuerySelector("#__VIEWSTATEGENERATOR") is IHtmlInputElement viewStateGenerator)
+                || !(loginDoc.QuerySelector("#__EVENTVALIDATION") is IHtmlInputElement eventValidation))
                 return false;
 
             var requestString = new Dictionary<string, string>()

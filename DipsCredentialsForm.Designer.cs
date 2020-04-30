@@ -48,43 +48,48 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 46);
+            this.label1.Location = new System.Drawing.Point(10, 37);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(148, 17);
+            this.label1.Size = new System.Drawing.Size(115, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "SWR DIPs User Name";
             // 
             // SwrUserNameTextBox
             // 
-            this.SwrUserNameTextBox.Location = new System.Drawing.Point(15, 66);
+            this.SwrUserNameTextBox.Location = new System.Drawing.Point(11, 54);
+            this.SwrUserNameTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.SwrUserNameTextBox.Name = "SwrUserNameTextBox";
-            this.SwrUserNameTextBox.Size = new System.Drawing.Size(391, 22);
+            this.SwrUserNameTextBox.Size = new System.Drawing.Size(294, 20);
             this.SwrUserNameTextBox.TabIndex = 2;
             this.SwrUserNameTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateSWRUserName);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(14, 108);
+            this.label2.Location = new System.Drawing.Point(10, 88);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(138, 17);
+            this.label2.Size = new System.Drawing.Size(108, 13);
             this.label2.TabIndex = 3;
             this.label2.Text = "SWR DIPs Password";
             // 
             // SwrPasswordTextBox
             // 
-            this.SwrPasswordTextBox.Location = new System.Drawing.Point(15, 128);
+            this.SwrPasswordTextBox.Location = new System.Drawing.Point(11, 104);
+            this.SwrPasswordTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.SwrPasswordTextBox.Name = "SwrPasswordTextBox";
-            this.SwrPasswordTextBox.Size = new System.Drawing.Size(391, 22);
+            this.SwrPasswordTextBox.Size = new System.Drawing.Size(294, 20);
             this.SwrPasswordTextBox.TabIndex = 4;
             this.SwrPasswordTextBox.UseSystemPasswordChar = true;
             this.SwrPasswordTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateSWRPassword);
             // 
             // WmrPasswordTextBox
             // 
-            this.WmrPasswordTextBox.Location = new System.Drawing.Point(15, 252);
+            this.WmrPasswordTextBox.Location = new System.Drawing.Point(11, 205);
+            this.WmrPasswordTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.WmrPasswordTextBox.Name = "WmrPasswordTextBox";
-            this.WmrPasswordTextBox.Size = new System.Drawing.Size(391, 22);
+            this.WmrPasswordTextBox.Size = new System.Drawing.Size(294, 20);
             this.WmrPasswordTextBox.TabIndex = 8;
             this.WmrPasswordTextBox.UseSystemPasswordChar = true;
             this.WmrPasswordTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateWMRPassword);
@@ -92,17 +97,19 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(14, 232);
+            this.label3.Location = new System.Drawing.Point(10, 188);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(140, 17);
+            this.label3.Size = new System.Drawing.Size(110, 13);
             this.label3.TabIndex = 7;
             this.label3.Text = "WMR DIPs Password";
             // 
             // WmrUserNameTextBox
             // 
-            this.WmrUserNameTextBox.Location = new System.Drawing.Point(15, 190);
+            this.WmrUserNameTextBox.Location = new System.Drawing.Point(11, 154);
+            this.WmrUserNameTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.WmrUserNameTextBox.Name = "WmrUserNameTextBox";
-            this.WmrUserNameTextBox.Size = new System.Drawing.Size(391, 22);
+            this.WmrUserNameTextBox.Size = new System.Drawing.Size(294, 20);
             this.WmrUserNameTextBox.TabIndex = 6;
             this.WmrUserNameTextBox.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateWMRUserName);
             // 
@@ -110,9 +117,10 @@
             // 
             this.SWRPasswordValidationLabel.AutoSize = true;
             this.SWRPasswordValidationLabel.ForeColor = System.Drawing.Color.Red;
-            this.SWRPasswordValidationLabel.Location = new System.Drawing.Point(14, 153);
+            this.SWRPasswordValidationLabel.Location = new System.Drawing.Point(10, 124);
+            this.SWRPasswordValidationLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.SWRPasswordValidationLabel.Name = "SWRPasswordValidationLabel";
-            this.SWRPasswordValidationLabel.Size = new System.Drawing.Size(254, 17);
+            this.SWRPasswordValidationLabel.Size = new System.Drawing.Size(192, 13);
             this.SWRPasswordValidationLabel.TabIndex = 5;
             this.SWRPasswordValidationLabel.Text = "You need to enter your SWR password";
             this.SWRPasswordValidationLabel.Visible = false;
@@ -120,18 +128,20 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(12, 9);
+            this.label5.Location = new System.Drawing.Point(9, 7);
+            this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(280, 17);
+            this.label5.Size = new System.Drawing.Size(211, 13);
             this.label5.TabIndex = 0;
             this.label5.Text = "You need to provide your DIPS credentials.";
             // 
             // OkayButton
             // 
             this.OkayButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OkayButton.Location = new System.Drawing.Point(250, 294);
+            this.OkayButton.Location = new System.Drawing.Point(188, 239);
+            this.OkayButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.OkayButton.Name = "OkayButton";
-            this.OkayButton.Size = new System.Drawing.Size(75, 26);
+            this.OkayButton.Size = new System.Drawing.Size(56, 21);
             this.OkayButton.TabIndex = 9;
             this.OkayButton.Text = "Okay";
             this.OkayButton.UseVisualStyleBackColor = true;
@@ -140,9 +150,10 @@
             // CancelFormButton
             // 
             this.CancelFormButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.CancelFormButton.Location = new System.Drawing.Point(331, 294);
+            this.CancelFormButton.Location = new System.Drawing.Point(248, 239);
+            this.CancelFormButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.CancelFormButton.Name = "CancelFormButton";
-            this.CancelFormButton.Size = new System.Drawing.Size(75, 26);
+            this.CancelFormButton.Size = new System.Drawing.Size(56, 21);
             this.CancelFormButton.TabIndex = 10;
             this.CancelFormButton.Text = "Cancel";
             this.CancelFormButton.UseVisualStyleBackColor = true;
@@ -152,9 +163,10 @@
             // 
             this.SWRUserNameValidationLabel.AutoSize = true;
             this.SWRUserNameValidationLabel.ForeColor = System.Drawing.Color.Red;
-            this.SWRUserNameValidationLabel.Location = new System.Drawing.Point(14, 91);
+            this.SWRUserNameValidationLabel.Location = new System.Drawing.Point(10, 74);
+            this.SWRUserNameValidationLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.SWRUserNameValidationLabel.Name = "SWRUserNameValidationLabel";
-            this.SWRUserNameValidationLabel.Size = new System.Drawing.Size(261, 17);
+            this.SWRUserNameValidationLabel.Size = new System.Drawing.Size(196, 13);
             this.SWRUserNameValidationLabel.TabIndex = 11;
             this.SWRUserNameValidationLabel.Text = "You need to enter your SWR user name";
             this.SWRUserNameValidationLabel.Visible = false;
@@ -162,9 +174,10 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(14, 170);
+            this.label7.Location = new System.Drawing.Point(10, 138);
+            this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(150, 17);
+            this.label7.Size = new System.Drawing.Size(117, 13);
             this.label7.TabIndex = 12;
             this.label7.Text = "WMR DIPs User Name";
             // 
@@ -172,9 +185,10 @@
             // 
             this.WMRPasswordValidationLabel.AutoSize = true;
             this.WMRPasswordValidationLabel.ForeColor = System.Drawing.Color.Red;
-            this.WMRPasswordValidationLabel.Location = new System.Drawing.Point(14, 277);
+            this.WMRPasswordValidationLabel.Location = new System.Drawing.Point(10, 225);
+            this.WMRPasswordValidationLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.WMRPasswordValidationLabel.Name = "WMRPasswordValidationLabel";
-            this.WMRPasswordValidationLabel.Size = new System.Drawing.Size(256, 17);
+            this.WMRPasswordValidationLabel.Size = new System.Drawing.Size(194, 13);
             this.WMRPasswordValidationLabel.TabIndex = 13;
             this.WMRPasswordValidationLabel.Text = "You need to enter your WMR password";
             this.WMRPasswordValidationLabel.Visible = false;
@@ -183,9 +197,10 @@
             // 
             this.WMRUserNameValidationLabel.AutoSize = true;
             this.WMRUserNameValidationLabel.ForeColor = System.Drawing.Color.Red;
-            this.WMRUserNameValidationLabel.Location = new System.Drawing.Point(14, 215);
+            this.WMRUserNameValidationLabel.Location = new System.Drawing.Point(10, 175);
+            this.WMRUserNameValidationLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.WMRUserNameValidationLabel.Name = "WMRUserNameValidationLabel";
-            this.WMRUserNameValidationLabel.Size = new System.Drawing.Size(263, 17);
+            this.WMRUserNameValidationLabel.Size = new System.Drawing.Size(198, 13);
             this.WMRUserNameValidationLabel.TabIndex = 14;
             this.WMRUserNameValidationLabel.Text = "You need to enter your WMR user name";
             this.WMRUserNameValidationLabel.Visible = false;
@@ -193,9 +208,9 @@
             // DipsCredentialsForm
             // 
             this.AcceptButton = this.OkayButton;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(418, 326);
+            this.ClientSize = new System.Drawing.Size(321, 272);
             this.ControlBox = false;
             this.Controls.Add(this.WMRUserNameValidationLabel);
             this.Controls.Add(this.WMRPasswordValidationLabel);
@@ -213,6 +228,7 @@
             this.Controls.Add(this.SwrUserNameTextBox);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "DipsCredentialsForm";
