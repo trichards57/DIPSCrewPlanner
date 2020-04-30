@@ -15,63 +15,63 @@ namespace DIPSCrewPlanner.Model
             new HubDetails
             {
                 DisplayName= "Worcester",
-                DipsName = "Worcestershire Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: WMAS (Worcestershire Hub)",
                 DipsContext = DipsContext.WMR,
                 VehicleCount = 2
             },
             new HubDetails
             {
                 DisplayName= "Coventry (PTS)",
-                DipsName = "Coventry Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: WMAS (Coventry Hub)",
                 DipsContext = DipsContext.WMR,
                 VehicleCount = 2
             },
             new HubDetails
             {
                 DisplayName= "Union Park",
-                DipsName = "Birmingham Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: WMAS (Birmingham Hub)",
                 DipsContext = DipsContext.WMR,
                 VehicleCount = 5
             },
             new HubDetails
             {
                 DisplayName= "Rugeley",
-                DipsName = "Rugeley Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: WMAS (Rugeley Hub)",
                 DipsContext = DipsContext.WMR,
                 VehicleCount = 2
             },
             new HubDetails
             {
                 DisplayName= "Truro",
-                DipsName = "Truro Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: SWAST (Truro Hub)",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 2
             },
             new HubDetails
             {
                 DisplayName= "Exeter",
-                DipsName = "Exeter Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: SWAST (Exeter Hub)",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 2
             },
             new HubDetails
             {
                 DisplayName= "Bristol",
-                DipsName = "Bristol Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: SWAST (Bristol Hub)",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 6
             },
             new HubDetails
             {
                 DisplayName= "Poole",
-                DipsName = "Poole Hub",
+                DipsName = "COVID-19 SWAST SUPPORT- POOLE",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 3
             },
             new HubDetails
             {
                 DisplayName= "Staverton",
-                DipsName = "Staverton Hub",
+                DipsName = "COVID-19 Ambulance Support Shift: SWAST (Staverton Hub)",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 2
             }

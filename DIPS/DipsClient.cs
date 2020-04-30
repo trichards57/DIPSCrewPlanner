@@ -15,11 +15,11 @@ namespace DIPSCrewPlanner.DIPS
         private readonly Credentials _creds;
         private readonly Regex CyclingHoursRegex = new Regex(@"Cycle responder operational hours<\/td>.+?([\d\.]+) Hrs<\/td>", RegexOptions.Compiled | RegexOptions.Singleline);
 
+        private Dictionary<string, int> _cachedDipsValues = new Dictionary<string, int>();
+        private HttpClient _client;
+        private IBrowsingContext _context;
+        private HttpClientHandler _handler;
         private bool _usingSwr = false;
-
-        private HttpClient client;
-        private IBrowsingContext context;
-        private HttpClientHandler handler;
 
         public DipsClient(Credentials creds)
         {
@@ -50,6 +50,48 @@ namespace DIPSCrewPlanner.DIPS
             }
         }
 
+        public async Task<int> GetDipsId(DateTime date, string name)
+        {
+            var key = name + date.ToString("o");
+
+            if (_cachedDipsValues.ContainsKey(key))
+                return _cachedDipsValues[key];
+
+            var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/DutySystem-ListDay.asp?newdist=&filter=&UID={date:dd/MM/yyyy}");
+            var result = await _client.GetAsync(uri);
+
+            var pageContent = await result.Content.ReadAsStringAsync();
+
+            var config = Configuration.Default;
+            var context = BrowsingContext.New(config);
+            var document = await context.OpenAsync(r => r.Content(pageContent));
+
+            var tableRows = document.QuerySelectorAll("tr.normal");
+
+            foreach (IHtmlTableRowElement row in tableRows)
+            {
+                var eventName = row.Children[1].TextContent;
+                if (eventName.StartsWith(name))
+                {
+                    var dipsId = row.Children[0].TextContent;
+                    var idPart = dipsId.Split(new[] { '/' }, 2, StringSplitOptions.RemoveEmptyEntries)[1];
+
+                    if (idPart.EndsWith("-M"))
+                        idPart = idPart.Substring(0, 6);
+
+                    var parseSuccess = int.TryParse(idPart, out var id);
+
+                    if (parseSuccess)
+                    {
+                        _cachedDipsValues[key] = id;
+                        return id;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
         public async Task<IEnumerable<Person>> GetEMTs()
         {
             var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/FindMemberCountyWide.asp?lookuptype=lookup&region=true&MI=");
@@ -67,7 +109,7 @@ namespace DIPSCrewPlanner.DIPS
             };
             var queryData = new FormUrlEncodedContent(parameters);
 
-            var result = await client.PostAsync(uri, queryData);
+            var result = await _client.PostAsync(uri, queryData);
 
             if (!result.IsSuccessStatusCode)
                 return Enumerable.Empty<Person>();
@@ -131,7 +173,7 @@ namespace DIPSCrewPlanner.DIPS
         public async Task<decimal> GetHours(int year, string dipsId)
         {
             var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/YearEndReport-Single.asp?type=getreport&member={dipsId}&listing=single&year={year}");
-            var result = await client.GetAsync(uri);
+            var result = await _client.GetAsync(uri);
 
             var resultString = await result.Content.ReadAsStringAsync();
             var matches = CyclingHoursRegex.Matches(resultString);
@@ -150,8 +192,8 @@ namespace DIPSCrewPlanner.DIPS
             _usingSwr = useSwr;
 
             var config = Configuration.Default.WithDefaultLoader();
-            context = BrowsingContext.New(config);
-            var loginDoc = await context.OpenAsync("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f");
+            _context = BrowsingContext.New(config);
+            var loginDoc = await _context.OpenAsync("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f");
 
             if (!(loginDoc.QuerySelector("#__VIEWSTATE") is IHtmlInputElement viewState)
                 || !(loginDoc.QuerySelector("#__VIEWSTATEGENERATOR") is IHtmlInputElement viewStateGenerator)
@@ -169,17 +211,17 @@ namespace DIPSCrewPlanner.DIPS
                 { "btnSubmit", "Login to DIPS" }
             };
 
-            handler = new HttpClientHandler
+            _handler = new HttpClientHandler
             {
                 CookieContainer = new System.Net.CookieContainer()
             };
-            client = new HttpClient(handler);
+            _client = new HttpClient(_handler);
             using (var content = new FormUrlEncodedContent(requestString))
             {
-                var res = await client.PostAsync(new Uri("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f"), content);
+                var res = await _client.PostAsync(new Uri("https://dips.sja.org.uk/default.aspx?ReturnUrl=%2f"), content);
             }
 
-            return handler.CookieContainer.Count > 0;
+            return _handler.CookieContainer.Count > 0;
         }
 
         #region IDisposable Support
@@ -199,10 +241,10 @@ namespace DIPSCrewPlanner.DIPS
             {
                 if (disposing)
                 {
-                    if (client != null)
-                        client.Dispose();
-                    if (handler != null)
-                        handler.Dispose();
+                    if (_client != null)
+                        _client.Dispose();
+                    if (_handler != null)
+                        _handler.Dispose();
                 }
 
                 disposedValue = true;

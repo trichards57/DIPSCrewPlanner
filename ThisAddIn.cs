@@ -35,6 +35,60 @@ namespace DIPSCrewPlanner
             }
         }
 
+        public async void GetDipsIds()
+        {
+            try
+            {
+                Application.Cursor = XlMousePointer.xlWait;
+
+                var swrClient = new DipsClient(Credentials);
+                var wmrClient = new DipsClient(Credentials);
+
+                var success = await swrClient.Login(true);
+                if (!success)
+                {
+                    MessageBox.Show("Could not log in to SWR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                success = await wmrClient.Login(false);
+                if (!success)
+                {
+                    MessageBox.Show("Could not log in to WMR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                Worksheet sheet = Application.ActiveSheet;
+
+                var date = DateTime.FromOADate((double)sheet.Range["A1"].Value2);
+
+                foreach (var row in sheet.UsedRange.Rows.OfType<Range>().Skip(3))
+                {
+                    var eventName = row.Cells[1, 1].Value;
+                    if (string.IsNullOrWhiteSpace(eventName))
+                        continue;
+
+                    var hub = HubDetails.GetDefaultSettings().FirstOrDefault(h => h.DisplayName == eventName);
+
+                    if (hub == null)
+                        continue;
+
+                    int dipsId;
+
+                    if (hub.DipsContext == DipsContext.SWR)
+                        dipsId = await swrClient.GetDipsId(date, hub.DipsName);
+                    else
+                        dipsId = await wmrClient.GetDipsId(date, hub.DipsName);
+
+                    if (dipsId != 0)
+                        row.Cells[1, 2].Value = dipsId;
+                }
+            }
+            finally
+            {
+                Application.Cursor = XlMousePointer.xlDefault;
+            }
+        }
+
         public async void SetDipsCredentials()
         {
             try
@@ -127,7 +181,7 @@ namespace DIPSCrewPlanner
             Application.Names.Add(PeopleNamesArea, peopleCache.Range["A1"]);
             Application.Names.Add(PeopleArea, peopleCache.Range["A1:F1"]);
 
-            for (var i = DateTime.Today; i < DateTime.Today.AddMonths(1); i = i.AddDays(1))
+            for (var i = DateTime.Today; i < DateTime.Today.AddDays(14); i = i.AddDays(1))
             {
                 Worksheet newSheet;
 

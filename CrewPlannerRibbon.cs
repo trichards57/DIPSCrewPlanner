@@ -21,6 +21,11 @@ namespace DIPSCrewPlanner
         {
         }
 
+        private void GetDipsIDsButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.ThisAddIn.GetDipsIds();
+        }
+
         private void SetupCredentialsButton_Click(object sender, RibbonControlEventArgs e)
         {
             Globals.ThisAddIn.SetDipsCredentials();
