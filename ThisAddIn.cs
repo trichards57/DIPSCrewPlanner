@@ -13,7 +13,6 @@ namespace DIPSCrewPlanner
 {
     public partial class ThisAddIn
     {
-        private const string EventCacheSheetName = "EventCache";
         private const string PeopleArea = "PeopleArea";
         private const string PeopleCacheSheetName = "PeopleCache";
         private const string PeopleNamesArea = "PeopleNames";
@@ -172,10 +171,7 @@ namespace DIPSCrewPlanner
 
             Worksheet previousSheet = null;
 
-            Worksheet eventsCache = Application.ActiveWorkbook.Worksheets.Add();
-            eventsCache.Name = EventCacheSheetName;
-
-            Worksheet peopleCache = Application.ActiveWorkbook.Worksheets.Add(After: eventsCache);
+            Worksheet peopleCache = Application.ActiveWorkbook.Worksheets.Add();
             peopleCache.Name = PeopleCacheSheetName;
 
             Application.Names.Add(PeopleNamesArea, peopleCache.Range["A1"]);
@@ -188,7 +184,7 @@ namespace DIPSCrewPlanner
                 if (previousSheet == null)
                     newSheet = Application.ActiveWorkbook.Worksheets.Add();
                 else
-                    newSheet = Application.ActiveWorkbook.Worksheets.Add(After: previousSheet);
+                    newSheet = Application.ActiveWorkbook.Worksheets.Add(Before: peopleCache);
 
                 SetupDaySheet(i, newSheet);
 
@@ -196,6 +192,7 @@ namespace DIPSCrewPlanner
             }
 
             Application.ActiveWorkbook.Worksheets[lastSheetToRemove].Delete();
+            peopleCache.Visible = XlSheetVisibility.xlSheetHidden;
         }
 
         public async void UpdatePeopleList()
