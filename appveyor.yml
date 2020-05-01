@@ -23,3 +23,4 @@ environment:
 install:
   - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
   - cmd: appveyor-tools\secure-file -decrypt DIPSCrewPlanner_TemporaryKey.pfx.enc -secret %file_key% -salt %file_salt%
+  - ps: Import-PfxCertificate -FilePath .\DIPSCrewPlanner_TemporaryKey.pfx -CertStoreLocation cert:\CurrentUser\My
