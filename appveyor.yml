@@ -16,7 +16,8 @@ before_build:
   - nuget restore
   - ps: .\Set-ProjectFilesClickOnceVersion.ps1 -ProjectFilePath .\DIPSCrewPlanner.csproj -Version $env:APPVEYOR_BUILD_VERSION
 after_build:
-  - ps: $root = Resolve-Path .\bin\Release\app.publish; [IO.Directory]::GetFiles($root.Path, '*.*', 'AllDirectories') | % { Push-AppveyorArtifact $_ -FileName $_.Substring($root.Path.Length + 1) -DeploymentName releaseBuild }
+  - ps: Compress-Archive -Path .\bin\Release\app.publish -DestinationPath DIPSCrewPlanner.zip
+  - ps: Push-AppveyorArtifact DIPSCrewPlanner.zip -DeploymentName releaseBuild
 environment:
   file_key:
     secure: rPChcoMBRKTVshbt2eROutlywcNfNxTPP399DdE3F10=
