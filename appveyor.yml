@@ -38,3 +38,47 @@ deploy:
   prerelease: false
   on:
     branch: master                 # release from master branch only
+    
+for:
+- 
+  branches:
+    only:
+    - master
+  notifications:
+  - provider: Webhook
+    url: https://outlook.office.com/webhook/b2ab9454-ec15-435d-9c5f-19eb420ded33@91d037fb-4714-4fe8-b084-68c083b8193f/IncomingWebhook/6fd2ba19a84e45f9b9fac61f517ad7cb/c893aad7-0229-4a7e-90c8-7a173aa14903
+    method: POST
+    content_type: application/json
+    body: >-
+      {
+        "@type": "MessageCard",
+        "@context": "https://schema.org/extensions",
+        "title": "New Release Available : {{projectName}} {{buildVersion}}",
+        "summary": "Build {{projectName}} {{buildVersion}} is now available",
+        "sections": [
+            {
+                "activityTitle": "{{commitAuthor}} on {{commitDate}} ( {{repositoryProvider}}/{{repositoryName}} )",
+                "activityText": "[Build {{projectName}} {{buildVersion}} {{status}}]({{buildUrl}})"
+            },
+            {
+                "title": "Details",
+                "facts": [
+                    {
+                        "name": "Commit",
+                        "value": "[{{commitId}} by {{commitAuthor}} on {{branch}} at {{commitDate}}]({{commitUrl}})"
+                    },
+                    {
+                        "name": "Message",
+                        "value": "{{commitMessage}}"
+                    },
+                    {
+                        "name": "Duration",
+                        "value": "{{duration}} ({{started}} - {{finished}})"
+                    }
+                ]
+            }
+        ]
+      }
+    on_build_success: true
+    on_build_failure: false
+    on_build_status_changed: false
