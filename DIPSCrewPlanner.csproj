@@ -28,6 +28,7 @@
     <AssemblyName>DIPSCrewPlanner</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <DefineConstants>VSTO40</DefineConstants>
+    <IsWebBootstrapper>False</IsWebBootstrapper>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
@@ -37,12 +38,11 @@
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
     <UpdateIntervalUnits>days</UpdateIntervalUnits>
-    <IsWebBootstrapper>False</IsWebBootstrapper>
-    <ProductName>DIPSCrewPlanner</ProductName>
-    <PublisherName />
-    <SupportUrl />
-    <FriendlyName>DIPSCrewPlanner</FriendlyName>
-    <OfficeApplicationDescription />
+    <ProductName>DIPS Crew Planner</ProductName>
+    <PublisherName>Tony Richards</PublisherName>
+    <SupportUrl>https://github.com/trichards57/DIPSCrewPlanner/issues</SupportUrl>
+    <FriendlyName>DIPS Crew Planner</FriendlyName>
+    <OfficeApplicationDescription>This is an Excel add-in that is designed to make it easier to manage the staffing of ambulance support shifts in DIPS. It allows planning to be conducted in a familier Excel spreadsheet, with the results uploaded to DIPS when required.</OfficeApplicationDescription>
     <LoadBehavior>3</LoadBehavior>
   </PropertyGroup>
   <ItemGroup>
