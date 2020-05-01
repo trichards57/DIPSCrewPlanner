@@ -16,7 +16,7 @@ before_build:
   - nuget restore
   - ps: .\Set-ProjectFilesClickOnceVersion.ps1 -ProjectFilePath .\DIPSCrewPlanner.csproj -Version $env:APPVEYOR_BUILD_VERSION
 after_build:
-  - ps: Compress-Archive -Path .\bin\Release\app.publish -DestinationPath DIPSCrewPlanner.zip
+  - ps: Compress-Archive -Path .\bin\Release\app.publish\ -DestinationPath DIPSCrewPlanner.zip
   - ps: Push-AppveyorArtifact DIPSCrewPlanner.zip -DeploymentName releaseBuild
 environment:
   file_key:
