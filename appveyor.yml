@@ -15,3 +15,11 @@ before_build:
   - ps: "$env:ApplicationVersion=$env:APPVEYOR_BUILD_VERSION"
 after_build:
   - ps: $root = Resolve-Path .\bin\Release\app.publish; [IO.Directory]::GetFiles($root.Path, '*.*', 'AllDirectories') | % { Push-AppveyorArtifact $_ -FileName $_.Substring($root.Path.Length + 1) -DeploymentName releaseBuild }
+environment:
+  file_key:
+    secure: rPChcoMBRKTVshbt2eROutlywcNfNxTPP399DdE3F10=
+  file_salt:
+    secure: gsT4EsVqLib2JgwqbTAwo+QTmCkVvFJZAFRc5nG9YbH8Q6gpfw2WAxJcZ8Mbke+JkPAyj2tLFvnitbHKlOQdLw==
+install:
+  - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
+  - cmd: appveyor-tools\secure-file -decrypt DIPSCrewPlanner_TemporaryKey.pfx.enc -secret %file_key% -salt %file_salt%
