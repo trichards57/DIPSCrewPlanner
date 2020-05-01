@@ -26,3 +26,14 @@ install:
   - ps: iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/appveyor/secure-file/master/install.ps1'))
   - cmd: appveyor-tools\secure-file -decrypt DIPSCrewPlanner_TemporaryKey.pfx.enc -secret %file_key% -salt %file_salt%
   - ps: Import-PfxCertificate -FilePath .\DIPSCrewPlanner_TemporaryKey.pfx -CertStoreLocation cert:\CurrentUser\My
+deploy:
+  release: DIPSCrewPlanner-v$(appveyor_build_version)
+  description: 'Automatic Release of DIPS Crew Planner'
+  provider: GitHub
+  auth_token:
+    secure: emnEGme5KwDVwwzSHHhWJytAQyKbIXRQW4Bfrdd11PO4UgafYVNZ+GNkFELFLU+k # your encrypted token from GitHub
+  artifact: releaseBuild            # upload all NuGet packages to release assets
+  draft: false
+  prerelease: false
+  on:
+    branch: master                 # release from master branch only
