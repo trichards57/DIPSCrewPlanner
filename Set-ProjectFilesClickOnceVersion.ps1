@@ -331,8 +331,8 @@ foreach ($clickOncePropertyGroup in $clickOncePropertyGroups)
 	Write-Output "Updating version number to be '$newVersionNumber'."
 
 	# Write the new values to the file.
-	Set-XmlNodesElementTextValue -xml $xml -node $clickOncePropertyGroup -elementName 'ApplicationVersion' -textValue "$newMajorMinorBuild.%2a"
-	Set-XmlNodesElementTextValue -xml $xml -node $clickOncePropertyGroup -elementName 'ApplicationRevision' -textValue $revision.ToString()
+	Set-XmlNodesElementTextValue -xml $xml -node $clickOncePropertyGroup -elementName 'ApplicationVersion' -textValue "$newVersionNumber"
+	# Set-XmlNodesElementTextValue -xml $xml -node $clickOncePropertyGroup -elementName 'ApplicationRevision' -textValue $revision.ToString()
 	if ($UpdateMinimumRequiredVersionToCurrentVersion)
 	{
 		Write-Output "Updating minimum required version to be '$newVersionNumber'."
