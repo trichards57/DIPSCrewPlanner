@@ -1,4 +1,4 @@
-﻿<Project ToolsVersion="16.0" DefaultTargets="Build;Publish" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="16.0" DefaultTargets="Build;Publish" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--
     This section defines project-level properties.
@@ -33,7 +33,7 @@
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.1</ApplicationVersion>
+    <ApplicationVersion>1.1.2.%2a</ApplicationVersion>
     <AutoIncrementApplicationRevision>false</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -44,6 +44,7 @@
     <FriendlyName>DIPS Crew Planner</FriendlyName>
     <OfficeApplicationDescription>This is an Excel add-in that is designed to make it easier to manage the staffing of ambulance support shifts in DIPS. It allows planning to be conducted in a familier Excel spreadsheet, with the results uploaded to DIPS when required.</OfficeApplicationDescription>
     <LoadBehavior>3</LoadBehavior>
+    <ApplicationRevision>0</ApplicationRevision>
   </PropertyGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

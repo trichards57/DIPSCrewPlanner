@@ -14,7 +14,7 @@ build:
   verbosity: minimal
 before_build:
   - nuget restore
-  - ps: "$env:ApplicationVersion=$env:APPVEYOR_BUILD_VERSION"
+  - ps: .\Set-ProjectFilesClickOnceVersion.ps1 -ProjectFilePath .\DIPSCrewPlanner.csproj -Version $env:APPVEYOR_BUILD_VERSION
 after_build:
   - ps: $root = Resolve-Path .\bin\Release\app.publish; [IO.Directory]::GetFiles($root.Path, '*.*', 'AllDirectories') | % { Push-AppveyorArtifact $_ -FileName $_.Substring($root.Path.Length + 1) -DeploymentName releaseBuild }
 environment:
