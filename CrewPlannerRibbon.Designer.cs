@@ -42,9 +42,12 @@
             this.group2 = this.Factory.CreateRibbonGroup();
             this.GetDipsIDsButton = this.Factory.CreateRibbonButton();
             this.UpdateDIPSButton = this.Factory.CreateRibbonButton();
+            this.group3 = this.Factory.CreateRibbonGroup();
+            this.AboutButton = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
+            this.group3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tab1
@@ -52,6 +55,7 @@
             this.tab1.ControlId.ControlIdType = Microsoft.Office.Tools.Ribbon.RibbonControlIdType.Office;
             this.tab1.Groups.Add(this.group1);
             this.tab1.Groups.Add(this.group2);
+            this.tab1.Groups.Add(this.group3);
             this.tab1.Label = "DIPS Crew Planner";
             this.tab1.Name = "tab1";
             // 
@@ -103,6 +107,18 @@
             this.UpdateDIPSButton.Name = "UpdateDIPSButton";
             this.UpdateDIPSButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.UpdateDIPSButton_Click);
             // 
+            // group3
+            // 
+            this.group3.Items.Add(this.AboutButton);
+            this.group3.Label = "About";
+            this.group3.Name = "group3";
+            // 
+            // AboutButton
+            // 
+            this.AboutButton.Label = "About";
+            this.AboutButton.Name = "AboutButton";
+            this.AboutButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AboutButton_Click);
+            // 
             // CrewPlannerRibbon
             // 
             this.Name = "CrewPlannerRibbon";
@@ -115,6 +131,8 @@
             this.group1.PerformLayout();
             this.group2.ResumeLayout(false);
             this.group2.PerformLayout();
+            this.group3.ResumeLayout(false);
+            this.group3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -129,6 +147,8 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton GetDipsIDsButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton UpdateDIPSButton;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup group3;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton AboutButton;
     }
 
     partial class ThisRibbonCollection

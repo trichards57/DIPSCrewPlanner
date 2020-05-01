@@ -17,6 +17,12 @@ namespace DIPSCrewPlanner
             UpdateVolunteerListButton.SuperTip = string.Empty;
         }
 
+        private void AboutButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            var aboutForm = new AboutBox();
+            aboutForm.ShowDialog();
+        }
+
         private void CrewPlannerRibbon_Load(object sender, RibbonUIEventArgs e)
         {
         }
