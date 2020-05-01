@@ -41,6 +41,7 @@
             this.UpdateVolunteerListButton = this.Factory.CreateRibbonButton();
             this.group2 = this.Factory.CreateRibbonGroup();
             this.GetDipsIDsButton = this.Factory.CreateRibbonButton();
+            this.UpdateDIPSButton = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.group2.SuspendLayout();
@@ -86,6 +87,7 @@
             // group2
             // 
             this.group2.Items.Add(this.GetDipsIDsButton);
+            this.group2.Items.Add(this.UpdateDIPSButton);
             this.group2.Label = "Events";
             this.group2.Name = "group2";
             // 
@@ -94,6 +96,12 @@
             this.GetDipsIDsButton.Label = "Get DIPS IDs";
             this.GetDipsIDsButton.Name = "GetDipsIDsButton";
             this.GetDipsIDsButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.GetDipsIDsButton_Click);
+            // 
+            // UpdateDIPSButton
+            // 
+            this.UpdateDIPSButton.Label = "Update DIPS";
+            this.UpdateDIPSButton.Name = "UpdateDIPSButton";
+            this.UpdateDIPSButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.UpdateDIPSButton_Click);
             // 
             // CrewPlannerRibbon
             // 
@@ -120,6 +128,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton UpdateVolunteerListButton;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton GetDipsIDsButton;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton UpdateDIPSButton;
     }
 
     partial class ThisRibbonCollection

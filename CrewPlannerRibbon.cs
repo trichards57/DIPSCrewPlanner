@@ -41,6 +41,11 @@ namespace DIPSCrewPlanner
             Globals.ThisAddIn.SetupBook();
         }
 
+        private void UpdateDIPSButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.ThisAddIn.UploadSheetToDips();
+        }
+
         private void UpdateVolunteerListButton_Click(object sender, RibbonControlEventArgs e)
         {
             Globals.ThisAddIn.UpdatePeopleList();

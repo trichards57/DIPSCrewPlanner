@@ -50,6 +50,69 @@ namespace DIPSCrewPlanner.DIPS
             }
         }
 
+        public async Task<bool> AddVolunteer(int eventId, int volunteerId, string role, DateTime startTime, DateTime endTime)
+        {
+            var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/CountMeInService.asp?duty={eventId}&type=add");
+            var parameters = new Dictionary<string, string>() {
+                { "DutyLinkNumber", eventId.ToString() },
+                {"MemberLinkNumber", volunteerId.ToString() },
+                {"Role", role },
+                {"StartDate", startTime.ToString("dd/MM/yyyy") },
+                {"StartTime", startTime.ToString("HH:mm") },
+                {"EndDate", endTime.ToString("dd/MM/yyyy") },
+                {"EndTime", endTime.ToString("HH:mm") },
+                {"LeadName", "No" },
+            };
+            var queryData = new FormUrlEncodedContent(parameters);
+
+            var result = await _client.PostAsync(uri, queryData);
+
+            if (!result.IsSuccessStatusCode)
+                return false;
+
+            var pageContent = await result.Content.ReadAsStringAsync();
+
+            return pageContent.Contains("<p><b> </b><br/>has been <b><i>added to</i></b> the event</p>");
+        }
+
+        public async Task<IEnumerable<Person>> GetBookedVolunteers(int eventId)
+        {
+            var uri = new Uri("https:" + $"//dips.sja.org.uk/SWR/CountMeInService.asp?duty={eventId}");
+
+            var result = await _client.GetAsync(uri);
+
+            if (!result.IsSuccessStatusCode)
+                return Enumerable.Empty<Person>();
+
+            var pageContent = await result.Content.ReadAsStringAsync();
+
+            var config = Configuration.Default;
+            var context = BrowsingContext.New(config);
+            var document = await context.OpenAsync(r => r.Content(pageContent));
+
+            var tableRows = document.QuerySelectorAll("tr[height=\"30\"]");
+
+            var peopleList = new List<Person>();
+
+            foreach (IHtmlTableRowElement row in tableRows)
+            {
+                var firstName = row.Children[0].TextContent;
+                var lastName = row.Children[1].TextContent;
+                var unit = row.Children[4].TextContent;
+
+                var person = new Person
+                {
+                    FirstName = firstName.Trim(),
+                    LastName = lastName.Trim(),
+                    UnitName = unit.Trim()
+                };
+
+                peopleList.Add(person);
+            }
+
+            return peopleList;
+        }
+
         public async Task<int> GetDipsId(DateTime date, string name)
         {
             var key = name + date.ToString("o");

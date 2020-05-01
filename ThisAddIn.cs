@@ -3,6 +3,7 @@ using DIPSCrewPlanner.Model;
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -247,6 +248,144 @@ namespace DIPSCrewPlanner
             {
                 Application.Cursor = XlMousePointer.xlDefault;
             }
+        }
+
+        public async void UploadSheetToDips()
+        {
+            try
+            {
+                Application.Cursor = XlMousePointer.xlWait;
+
+                var swrClient = new DipsClient(Credentials);
+                var wmrClient = new DipsClient(Credentials);
+
+                var success = await swrClient.Login(true);
+                if (!success)
+                {
+                    MessageBox.Show("Could not log in to SWR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                success = await wmrClient.Login(false);
+                if (!success)
+                {
+                    MessageBox.Show("Could not log in to WMR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                Worksheet sheet = Application.ActiveSheet;
+
+                var date = DateTime.FromOADate((double)sheet.Range["A1"].Value2);
+
+                foreach (var row in sheet.UsedRange.Rows.OfType<Range>().Skip(3))
+                {
+                    var eventName = row.Cells[1, 1].Value;
+                    if (string.IsNullOrWhiteSpace(eventName))
+                        continue;
+
+                    var hub = HubDetails.GetDefaultSettings().FirstOrDefault(h => h.DisplayName == eventName);
+
+                    if (hub == null)
+                        continue;
+
+                    var parseResult = int.TryParse(row.Cells[1, 2].Text, out int dipsId);
+
+                    if (!parseResult)
+                        continue;
+
+                    if (string.IsNullOrWhiteSpace(row.Cells[1, 8].Text) || string.IsNullOrWhiteSpace(row.Cells[1, 9].Text))
+                        continue;
+
+                    var startTime = date.Date + DateTime.FromOADate((double)row.Cells[1, 8].Value2).TimeOfDay;
+                    var endTime = date.Date + DateTime.FromOADate((double)row.Cells[1, 9].Value2).TimeOfDay;
+
+                    IEnumerable<Person> currentStaff;
+
+                    if (hub.DipsContext == DipsContext.SWR)
+                        currentStaff = await swrClient.GetBookedVolunteers(dipsId);
+                    else
+                        currentStaff = await wmrClient.GetBookedVolunteers(dipsId);
+
+                    // Get driver details
+                    if (!string.IsNullOrWhiteSpace(row.Cells[1, 4].Text))
+                    {
+                        var trimmedName = row.Cells[1, 4].Text.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
+                        var unit = row.Cells[1, 5].Text;
+
+                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        {
+                            var driverId = FindVolunteerId(row.Cells[1, 4].Text);
+
+                            Debug.WriteLine($"Adding volunteer : {driverId}");
+
+                            if (driverId != 0)
+                            {
+                                bool res;
+                                if (hub.DipsContext == DipsContext.SWR)
+                                {
+                                    res = await swrClient.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
+                                }
+                                else
+                                {
+                                    res = await wmrClient.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
+                                }
+                                Debug.WriteLineIf(!res, $"Adding volunteer : failed");
+                            }
+                        }
+                    }
+                    // Get attendant details
+                    if (!string.IsNullOrWhiteSpace(row.Cells[1, 6].Text))
+                    {
+                        var trimmedName = row.Cells[1, 6].Text.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
+                        var unit = row.Cells[1, 7].Text;
+
+                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        {
+                            var attendantId = FindVolunteerId(row.Cells[1, 6].Text);
+
+                            Debug.WriteLine($"Adding volunteer : {attendantId}");
+
+                            if (attendantId != 0)
+                            {
+                                bool res;
+                                if (hub.DipsContext == DipsContext.SWR)
+                                {
+                                    res = await swrClient.AddVolunteer(dipsId, attendantId, "ETA", startTime, endTime);
+                                }
+                                else
+                                {
+                                    res = await wmrClient.AddVolunteer(dipsId, attendantId, "ETA", startTime, endTime);
+                                }
+                                Debug.WriteLineIf(!res, $"Adding volunteer : failed");
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Application.Cursor = XlMousePointer.xlDefault;
+            }
+        }
+
+        private int FindVolunteerId(string name)
+        {
+            Worksheet sheet = Application.Worksheets[PeopleCacheSheetName];
+
+            foreach (var row in sheet.UsedRange.Rows.OfType<Range>().Skip(3))
+            {
+                var personName = row.Cells[1, 1].Text;
+
+                if (personName.Equals(name))
+                {
+                    var parseSuccess = int.TryParse(row.Cells[1, 2].Text, out int resultId);
+
+                    if (parseSuccess)
+                        return resultId;
+                    return 0;
+                }
+            }
+
+            return 0;
         }
 
         private void SetupDaySheet(DateTime date, Worksheet worksheet)

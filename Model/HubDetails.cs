@@ -64,7 +64,7 @@ namespace DIPSCrewPlanner.Model
             new HubDetails
             {
                 DisplayName= "Poole",
-                DipsName = "COVID-19 SWAST SUPPORT- POOLE",
+                DipsName = "COVID-19 Ambulance Support Shift: SWAST (Poole Hub)",
                 DipsContext = DipsContext.SWR,
                 VehicleCount = 3
             },
