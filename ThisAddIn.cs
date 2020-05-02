@@ -330,6 +330,11 @@ namespace DIPSCrewPlanner
                                 }
                                 Debug.WriteLineIf(!res, $"Adding volunteer : failed");
                             }
+                            else
+                            {
+                                Debug.WriteLine($"Adding volunteer : volunteer not found");
+                                MessageBox.Show($"Could not find volunteer : {row.Cells[1, 4].Text}");
+                            }
                         }
                     }
                     // Get attendant details
@@ -357,6 +362,11 @@ namespace DIPSCrewPlanner
                                 }
                                 Debug.WriteLineIf(!res, $"Adding volunteer : failed");
                             }
+                            else
+                            {
+                                Debug.WriteLine($"Adding volunteer : volunteer not found");
+                                MessageBox.Show($"Could not find volunteer : {row.Cells[1, 4].Text}");
+                            }
                         }
                     }
                 }
@@ -373,9 +383,9 @@ namespace DIPSCrewPlanner
 
             foreach (var row in sheet.UsedRange.Rows.OfType<Range>().Skip(3))
             {
-                var personName = row.Cells[1, 1].Text;
+                var personName = row.Cells[1, 1].Text as string;
 
-                if (personName.Equals(name))
+                if (name.Equals(personName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     var parseSuccess = int.TryParse(row.Cells[1, 2].Text, out int resultId);
 
