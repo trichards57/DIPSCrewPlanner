@@ -1,5 +1,6 @@
 ﻿using DIPSCrewPlanner.DIPS;
 using DIPSCrewPlanner.Model;
+using Microsoft.ApplicationInsights;
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DIPSCrewPlanner
@@ -19,6 +21,7 @@ namespace DIPSCrewPlanner
         private const string PeopleCacheSheetName = "PeopleCache";
         private const string PeopleNamesArea = "PeopleNames";
         private const string SheetDateFormat = "dddd ddMMyy";
+        private readonly TelemetryClient _telemetryClient = new TelemetryClient();
         private Credentials _credentials;
         private string _settingsFolder;
         private string _settingsPath;
@@ -39,21 +42,12 @@ namespace DIPSCrewPlanner
             {
                 Application.Cursor = XlMousePointer.xlWait;
 
-                var swrClient = new DipsClient(Credentials);
-                var wmrClient = new DipsClient(Credentials);
-
-                var success = await swrClient.Login(true);
-                if (!success)
-                {
-                    MessageBox.Show("Could not log in to SWR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var swrClient = await GetClient(true);
+                if (swrClient == null)
                     return;
-                }
-                success = await wmrClient.Login(false);
-                if (!success)
-                {
-                    MessageBox.Show("Could not log in to WMR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var wmrClient = await GetClient(false);
+                if (wmrClient == null)
                     return;
-                }
 
                 Worksheet sheet = Application.ActiveSheet;
 
@@ -65,7 +59,7 @@ namespace DIPSCrewPlanner
                     if (string.IsNullOrWhiteSpace(eventName))
                         continue;
 
-                    var hub = HubDetails.GetDefaultSettings().FirstOrDefault(h => h.DisplayName == eventName);
+                    var hub = IdentifyHub(eventName);
 
                     if (hub == null)
                         continue;
@@ -79,7 +73,15 @@ namespace DIPSCrewPlanner
 
                     if (dipsId != 0)
                         row.Cells[1, 2].Value = dipsId;
+                    else
+                    {
+                        _telemetryClient.TrackEvent("Could not identify event", new Dictionary<string, string> { { "event", hub.DipsName }, { "date", date.ToString("o") } });
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "activity", "get-dips-id" } });
             }
             finally
             {
@@ -116,16 +118,19 @@ namespace DIPSCrewPlanner
                         if (!swrSuccess && !wmrSuccess)
                         {
                             MessageBox.Show("Neither your WMR nor your SWR password worked.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            _telemetryClient.TrackEvent("Bad user credentials provided", new Dictionary<string, string> { { "account", "both" } });
                             tryAgain = true;
                         }
                         else if (!wmrSuccess)
                         {
                             MessageBox.Show("Your WMR password did not work.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            _telemetryClient.TrackEvent("Bad user credentials provided", new Dictionary<string, string> { { "account", "WMR" } });
                             tryAgain = true;
                         }
                         else if (!swrSuccess)
                         {
                             MessageBox.Show("Your SWR password did not work.  Please try again.  If this keeps failing, try logging into DIPS and check that your password hasn't expired.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            _telemetryClient.TrackEvent("Bad user credentials provided", new Dictionary<string, string> { { "account", "SWR" } });
                             tryAgain = true;
                         }
                         else
@@ -137,20 +142,30 @@ namespace DIPSCrewPlanner
                             {
                                 try
                                 {
+                                    _telemetryClient.TrackEvent("Saving credentials");
                                     if (!Directory.Exists(_settingsFolder))
                                         Directory.CreateDirectory(_settingsFolder);
 
                                     var credentialsFile = JsonSerializer.Serialize(Credentials);
                                     File.WriteAllText(_settingsPath, credentialsFile);
                                 }
-                                catch (SystemException)
+                                catch (SystemException ex)
                                 {
+                                    _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "activity", "save-credentials" } });
                                     MessageBox.Show("There was a problem saving your credentials.  You will have to try again next time.");
                                 }
+                            }
+                            else
+                            {
+                                _telemetryClient.TrackEvent("Not saving credentials");
                             }
                         }
                     }
                 } while (tryAgain);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "activity", "set-credentials" } });
             }
             finally
             {
@@ -160,6 +175,7 @@ namespace DIPSCrewPlanner
 
         public void SetupBook()
         {
+            _telemetryClient.TrackEvent("Setup book");
             var lastSheetToRemove = "";
 
             foreach (Worksheet sheet in Application.ActiveWorkbook.Worksheets)
@@ -200,14 +216,23 @@ namespace DIPSCrewPlanner
         {
             try
             {
+                _telemetryClient.TrackEvent("Started updating volunteer list");
                 Application.Cursor = XlMousePointer.xlWait;
-                var client = new DipsClient(Credentials);
-                await client.Login(true);
-                var swrResult = await client.GetEMTs();
-                await client.Login(false);
-                var wmrResult = await client.GetEMTs();
 
-                var people = Enumerable.Concat(swrResult, wmrResult);
+                var swrClient = await GetClient(true);
+                if (swrClient == null)
+                    return;
+                var wmrClient = await GetClient(false);
+                if (wmrClient == null)
+                    return;
+
+                var swrResult = await swrClient.GetEMTs();
+                var wmrResult = await wmrClient.GetEMTs();
+
+                var people = Enumerable.Concat(swrResult, wmrResult).ToList();
+
+                var volunteerCount = _telemetryClient.GetMetric("VolunteersDownloaded");
+                volunteerCount.TrackValue(people.Count());
 
                 var currentRow = 0;
                 var cacheSheet = Application.Worksheets.OfType<Worksheet>().FirstOrDefault(s => s.Name == PeopleCacheSheetName);
@@ -244,6 +269,10 @@ namespace DIPSCrewPlanner
                 Application.Names.Add(PeopleNamesArea, cacheSheet.Range[$"A1:A{currentRow}"]);
                 Application.Names.Add(PeopleArea, cacheSheet.Range[$"A1:I{currentRow}"]);
             }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "activity", "update-volunteer-list" } });
+            }
             finally
             {
                 Application.Cursor = XlMousePointer.xlDefault;
@@ -252,25 +281,21 @@ namespace DIPSCrewPlanner
 
         public async void UploadSheetToDips()
         {
+            _telemetryClient.TrackEvent("Started uploading sheet");
+
+            var timer = new Stopwatch();
+            timer.Start();
+            var volunteerCount = 0;
+
             try
             {
                 Application.Cursor = XlMousePointer.xlWait;
 
-                var swrClient = new DipsClient(Credentials);
-                var wmrClient = new DipsClient(Credentials);
+                var swrClient = await GetClient(true);
+                var wmrClient = await GetClient(false);
 
-                var success = await swrClient.Login(true);
-                if (!success)
-                {
-                    MessageBox.Show("Could not log in to SWR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (swrClient == null || wmrClient == null)
                     return;
-                }
-                success = await wmrClient.Login(false);
-                if (!success)
-                {
-                    MessageBox.Show("Could not log in to WMR DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
 
                 Worksheet sheet = Application.ActiveSheet;
 
@@ -282,15 +307,18 @@ namespace DIPSCrewPlanner
                     if (string.IsNullOrWhiteSpace(eventName))
                         continue;
 
-                    var hub = HubDetails.GetDefaultSettings().FirstOrDefault(h => h.DisplayName == eventName);
+                    HubDetails hub = IdentifyHub(eventName);
 
-                    if (hub == null)
-                        continue;
-
-                    var parseResult = int.TryParse(row.Cells[1, 2].Text, out int dipsId);
+                    var dipsIdText = row.Cells[1, 2].Text;
+                    var parseResult = int.TryParse(dipsIdText, out int dipsId);
 
                     if (!parseResult)
+                    {
+                        if (!string.IsNullOrWhiteSpace(dipsIdText))
+                            _telemetryClient.TrackEvent("Unidentifiable DIPS ID", new Dictionary<string, string> { { "dips-id", dipsIdText } });
+
                         continue;
+                    }
 
                     if (string.IsNullOrWhiteSpace(row.Cells[1, 8].Text) || string.IsNullOrWhiteSpace(row.Cells[1, 9].Text))
                         continue;
@@ -305,75 +333,80 @@ namespace DIPSCrewPlanner
                     else
                         currentStaff = await wmrClient.GetBookedVolunteers(dipsId);
 
+                    string driverName = row.Cells[1, 4].Text;
+
                     // Get driver details
-                    if (!string.IsNullOrWhiteSpace(row.Cells[1, 4].Text))
+                    if (!string.IsNullOrWhiteSpace(driverName))
                     {
-                        var trimmedName = row.Cells[1, 4].Text.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
+                        var trimmedName = driverName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 5].Text;
 
                         if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
                         {
-                            var driverId = FindVolunteerId(row.Cells[1, 4].Text);
-
-                            Debug.WriteLine($"Adding volunteer : {driverId}");
-
-                            if (driverId != 0)
-                            {
-                                bool res;
-                                if (hub.DipsContext == DipsContext.SWR)
-                                {
-                                    res = await swrClient.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
-                                }
-                                else
-                                {
-                                    res = await wmrClient.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
-                                }
-                                Debug.WriteLineIf(!res, $"Adding volunteer : failed");
-                            }
-                            else
-                            {
-                                Debug.WriteLine($"Adding volunteer : volunteer not found");
-                                MessageBox.Show($"Could not find volunteer : {row.Cells[1, 4].Text}");
-                            }
+                            var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, driverName, startTime, endTime);
+                            if (result)
+                                volunteerCount++;
                         }
                     }
+
+                    string attendantName = row.Cells[1, 6].Text;
+
                     // Get attendant details
-                    if (!string.IsNullOrWhiteSpace(row.Cells[1, 6].Text))
+                    if (!string.IsNullOrWhiteSpace(attendantName))
                     {
-                        var trimmedName = row.Cells[1, 6].Text.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
+                        var trimmedName = attendantName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 7].Text;
 
                         if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
                         {
-                            var attendantId = FindVolunteerId(row.Cells[1, 6].Text);
-
-                            Debug.WriteLine($"Adding volunteer : {attendantId}");
-
-                            if (attendantId != 0)
-                            {
-                                bool res;
-                                if (hub.DipsContext == DipsContext.SWR)
-                                {
-                                    res = await swrClient.AddVolunteer(dipsId, attendantId, "ETA", startTime, endTime);
-                                }
-                                else
-                                {
-                                    res = await wmrClient.AddVolunteer(dipsId, attendantId, "ETA", startTime, endTime);
-                                }
-                                Debug.WriteLineIf(!res, $"Adding volunteer : failed");
-                            }
-                            else
-                            {
-                                Debug.WriteLine($"Adding volunteer : volunteer not found");
-                                MessageBox.Show($"Could not find volunteer : {row.Cells[1, 4].Text}");
-                            }
+                            var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, attendantName, startTime, endTime);
+                            if (result)
+                                volunteerCount++;
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
             finally
             {
+                var uploadMetric = _telemetryClient.GetMetric("UploadTimeTaken");
+                var volunteersCountMetric = _telemetryClient.GetMetric("VolunteersUploaded");
+
                 Application.Cursor = XlMousePointer.xlDefault;
+                timer.Stop();
+                uploadMetric.TrackValue(timer.ElapsedMilliseconds);
+                volunteersCountMetric.TrackValue(volunteerCount);
+            }
+        }
+
+        private async Task<bool> AddVolunteer(DipsClient client, int dipsId, string volunteerName, DateTime startTime, DateTime endTime)
+        {
+            var driverId = FindVolunteerId(volunteerName);
+
+            Debug.WriteLine($"Adding volunteer : {driverId}");
+
+            if (driverId != 0)
+            {
+                var res = await client.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
+
+                if (!res)
+                {
+                    Debug.WriteLine($"Adding volunteer : failed");
+                    _telemetryClient.TrackEvent("Adding a volunteer failed");
+                    MessageBox.Show($"Could not add volunteer : {volunteerName}");
+                }
+
+                return res;
+            }
+            else
+            {
+                Debug.WriteLine($"Adding volunteer : volunteer not found");
+                _telemetryClient.TrackEvent("Finding a volunteer failed");
+                MessageBox.Show($"Could not find volunteer : {volunteerName}");
+                return false;
             }
         }
 
@@ -396,6 +429,33 @@ namespace DIPSCrewPlanner
             }
 
             return 0;
+        }
+
+        private async Task<DipsClient> GetClient(bool useSwr)
+        {
+            var client = new DipsClient(Credentials);
+            var success = await client.Login(useSwr);
+            if (!success)
+            {
+                MessageBox.Show($"Could not log in to {(useSwr ? "SWR" : "WMR")} DIPS.", "Log In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _telemetryClient.TrackEvent("DIPS login failed");
+                return null;
+            }
+
+            _telemetryClient.TrackEvent("DIPS login success");
+            return client;
+        }
+
+        private HubDetails IdentifyHub(string eventName)
+        {
+            var hub = HubDetails.GetDefaultSettings().FirstOrDefault(h => h.DisplayName == eventName);
+
+            if (hub == null)
+            {
+                _telemetryClient.TrackEvent("Unidentifiable hub found", new Dictionary<string, string> { { "hub", eventName } });
+            }
+
+            return hub;
         }
 
         private void SetupDaySheet(DateTime date, Worksheet worksheet)
@@ -462,6 +522,11 @@ namespace DIPSCrewPlanner
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            _telemetryClient.Context.Session.Id = Guid.NewGuid().ToString();
+            _telemetryClient.Context.Device.OperatingSystem = Environment.OSVersion.ToString();
+
+            _telemetryClient.TrackPageView("DipsCrewPlanner");
+
             _settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DIPSCrewPlanner");
             _settingsPath = Path.Combine(_settingsFolder, "credentials.json");
 
@@ -469,13 +534,17 @@ namespace DIPSCrewPlanner
 
             if (File.Exists(_settingsPath))
             {
+                _telemetryClient.TrackEvent("Credential file found");
+
                 try
                 {
                     var creds = File.ReadAllText(_settingsPath);
                     Credentials = JsonSerializer.Deserialize<Credentials>(creds);
+                    _telemetryClient.TrackEvent("Credential file loaded");
                 }
-                catch (SystemException)
+                catch (SystemException ex)
                 {
+                    _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "activity", "restore-credentials" } });
                     MessageBox.Show("There was a problem loading your DIPS credentials.  You will need to re-enter them.", "Error Loading Credentials", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -497,8 +566,8 @@ namespace DIPSCrewPlanner
         /// </summary>
         private void InternalStartup()
         {
-            Startup += new System.EventHandler(ThisAddIn_Startup);
-            Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            Startup += new EventHandler(ThisAddIn_Startup);
+            Shutdown += new EventHandler(ThisAddIn_Shutdown);
         }
 
         #endregion VSTO generated code
