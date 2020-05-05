@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Windows.Forms;
 
@@ -24,14 +25,11 @@ namespace DIPSCrewPlanner
 
         public Credentials Credentials
         {
-            get { return _credentials; }
+            get => _credentials;
             private set
             {
                 _credentials = value;
-                if (value != null)
-                    Globals.Ribbons.CrewPlannerRibbon.EnableControls();
-                else
-                    Globals.Ribbons.CrewPlannerRibbon.DisableControls();
+                Globals.Ribbons.CrewPlannerRibbon.HasCredentials = value != null;
             }
         }
 
@@ -95,8 +93,10 @@ namespace DIPSCrewPlanner
             {
                 Application.Cursor = XlMousePointer.xlWait;
 
-                var form = new DipsCredentialsForm();
-                form.Credentials = Credentials;
+                var form = new DipsCredentialsForm
+                {
+                    Credentials = Credentials
+                };
 
                 bool tryAgain;
 
@@ -479,6 +479,14 @@ namespace DIPSCrewPlanner
                     MessageBox.Show("There was a problem loading your DIPS credentials.  You will need to re-enter them.", "Error Loading Credentials", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+
+            Globals.Ribbons.CrewPlannerRibbon.IsOnline = NetworkInterface.GetIsNetworkAvailable();
+            NetworkChange.NetworkAvailabilityChanged += UpdateNetworkAvailability;
+        }
+
+        private void UpdateNetworkAvailability(object sender, NetworkAvailabilityEventArgs e)
+        {
+            Globals.Ribbons.CrewPlannerRibbon.IsOnline = e.IsAvailable;
         }
 
         #region VSTO generated code
