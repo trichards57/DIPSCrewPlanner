@@ -5,16 +5,57 @@ namespace DIPSCrewPlanner
 {
     public partial class CrewPlannerRibbon
     {
-        public void DisableControls()
+        private bool _hasCredentials = false;
+        private bool _isOnline = false;
+
+        public bool HasCredentials
         {
-            UpdateVolunteerListButton.Enabled = false;
-            UpdateVolunteerListButton.SuperTip = "You need to set your Credentials first.";
+            get => _hasCredentials;
+            set
+            {
+                _hasCredentials = value;
+                UpdateControls();
+            }
         }
 
-        public void EnableControls()
+        public bool IsOnline
         {
-            UpdateVolunteerListButton.Enabled = true;
-            UpdateVolunteerListButton.SuperTip = string.Empty;
+            get => _isOnline;
+            set
+            {
+                _isOnline = value;
+                UpdateControls();
+            }
+        }
+
+        public void UpdateControls()
+        {
+            GetDipsIDsButton.Enabled = HasCredentials && IsOnline;
+            UpdateDIPSButton.Enabled = HasCredentials && IsOnline;
+            UpdateVolunteerListButton.Enabled = HasCredentials && IsOnline;
+            SetupCredentialsButton.Enabled = IsOnline;
+
+            if (!IsOnline)
+            {
+                SetupCredentialsButton.SuperTip = "You need to be online.";
+                UpdateVolunteerListButton.SuperTip = "You need to be online.";
+                GetDipsIDsButton.SuperTip = "You need to be online.";
+                UpdateDIPSButton.SuperTip = "You need to be online.";
+            }
+            else if (!HasCredentials)
+            {
+                SetupCredentialsButton.SuperTip = string.Empty;
+                UpdateVolunteerListButton.SuperTip = "You need to set your Credentials first.";
+                GetDipsIDsButton.SuperTip = "You need to set your Credentials first.";
+                UpdateDIPSButton.SuperTip = "You need to set your Credentials first.";
+            }
+            else
+            {
+                SetupCredentialsButton.SuperTip = string.Empty;
+                UpdateVolunteerListButton.SuperTip = string.Empty;
+                GetDipsIDsButton.SuperTip = string.Empty;
+                UpdateDIPSButton.SuperTip = string.Empty;
+            }
         }
 
         private void AboutButton_Click(object sender, RibbonControlEventArgs e)
