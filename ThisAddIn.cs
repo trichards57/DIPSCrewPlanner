@@ -381,7 +381,7 @@ namespace DIPSCrewPlanner
         {
             Worksheet sheet = Application.Worksheets[PeopleCacheSheetName];
 
-            foreach (var row in sheet.UsedRange.Rows.OfType<Range>().Skip(3))
+            foreach (var row in sheet.UsedRange.Rows.OfType<Range>())
             {
                 var personName = row.Cells[1, 1].Text as string;
 
