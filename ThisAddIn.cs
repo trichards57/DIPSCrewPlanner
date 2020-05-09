@@ -286,6 +286,7 @@ namespace DIPSCrewPlanner
             var timer = new Stopwatch();
             timer.Start();
             var volunteerCount = 0;
+            var alreadyLoggedCount = 0;
 
             try
             {
@@ -320,8 +321,18 @@ namespace DIPSCrewPlanner
                         continue;
                     }
 
+                    string driverName = row.Cells[1, 4].Text;
+                    string attendantName = row.Cells[1, 6].Text;
+
                     if (string.IsNullOrWhiteSpace(row.Cells[1, 8].Text) || string.IsNullOrWhiteSpace(row.Cells[1, 9].Text))
+                    {
+                        if (!string.IsNullOrWhiteSpace(driverName))
+                            MessageBox.Show($"Shift times are missing for {driverName}.  They will not be added to DIPS.", "Missing Shift Time", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (!string.IsNullOrWhiteSpace(attendantName))
+                            MessageBox.Show($"Shift times are missing for {attendantName}.  They will not be added to DIPS.", "Missing Shift Time", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
                         continue;
+                    }
 
                     var startTime = date.Date + DateTime.FromOADate((double)row.Cells[1, 8].Value2).TimeOfDay;
                     var endTime = date.Date + DateTime.FromOADate((double)row.Cells[1, 9].Value2).TimeOfDay;
@@ -332,8 +343,6 @@ namespace DIPSCrewPlanner
                         currentStaff = await swrClient.GetBookedVolunteers(dipsId);
                     else
                         currentStaff = await wmrClient.GetBookedVolunteers(dipsId);
-
-                    string driverName = row.Cells[1, 4].Text;
 
                     // Get driver details
                     if (!string.IsNullOrWhiteSpace(driverName))
@@ -347,9 +356,9 @@ namespace DIPSCrewPlanner
                             if (result)
                                 volunteerCount++;
                         }
+                        else
+                            alreadyLoggedCount++;
                     }
-
-                    string attendantName = row.Cells[1, 6].Text;
 
                     // Get attendant details
                     if (!string.IsNullOrWhiteSpace(attendantName))
@@ -363,6 +372,8 @@ namespace DIPSCrewPlanner
                             if (result)
                                 volunteerCount++;
                         }
+                        else
+                            alreadyLoggedCount++;
                     }
                 }
             }
@@ -379,6 +390,8 @@ namespace DIPSCrewPlanner
                 timer.Stop();
                 uploadMetric.TrackValue(timer.ElapsedMilliseconds);
                 volunteersCountMetric.TrackValue(volunteerCount);
+
+                MessageBox.Show($"Update complete.  {volunteerCount} people added to DIPS.  {alreadyLoggedCount} were already signed up.", "Update Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
