@@ -98,7 +98,10 @@ namespace DIPSCrewPlanner.DIPS
             {
                 var firstName = row.Children[0].TextContent;
                 var lastName = row.Children[1].TextContent;
-                var unit = row.Children[4].TextContent;
+                var unitCell = row.Children[4];
+                if (unitCell.Children.Length == 1)
+                    unitCell.Children[0].Remove(); // Filter out the out of region flags.
+                var unit = unitCell.TextContent;
 
                 var person = new Person
                 {
