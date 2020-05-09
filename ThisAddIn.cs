@@ -385,13 +385,48 @@ namespace DIPSCrewPlanner
             {
                 var uploadMetric = _telemetryClient.GetMetric("UploadTimeTaken");
                 var volunteersCountMetric = _telemetryClient.GetMetric("VolunteersUploaded");
+                var volunteersNotAddedCountMetric = _telemetryClient.GetMetric("VolunteersAlreadyListed");
 
                 Application.Cursor = XlMousePointer.xlDefault;
                 timer.Stop();
                 uploadMetric.TrackValue(timer.ElapsedMilliseconds);
                 volunteersCountMetric.TrackValue(volunteerCount);
+                volunteersNotAddedCountMetric.TrackValue(alreadyLoggedCount);
 
-                MessageBox.Show($"Update complete.  {volunteerCount} people added to DIPS.  {alreadyLoggedCount} were already signed up.", "Update Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string addedMessage;
+                string alreadyLoggedMessage;
+
+                switch (volunteerCount)
+                {
+                    case 0:
+                        addedMessage = "Nobody added to DIPS.";
+                        break;
+
+                    case 1:
+                        addedMessage = "1 person added to DIPS.";
+                        break;
+
+                    default:
+                        addedMessage = $"{volunteerCount} people added to DIPS.";
+                        break;
+                }
+
+                switch (alreadyLoggedCount)
+                {
+                    case 0:
+                        alreadyLoggedMessage = "Nobody was already signed up.";
+                        break;
+
+                    case 1:
+                        alreadyLoggedMessage = "1 person was already signed up.";
+                        break;
+
+                    default:
+                        alreadyLoggedMessage = $"{alreadyLoggedCount} were already signed up.";
+                        break;
+                }
+
+                MessageBox.Show($"Update complete.  {addedMessage}  {alreadyLoggedMessage}", "Update Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
