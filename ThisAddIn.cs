@@ -289,6 +289,8 @@ namespace DIPSCrewPlanner
 
         public async void UploadSheetToDips()
         {
+            Application.ActiveWorkbook.Save();
+
             _telemetryClient.TrackEvent("Started uploading sheet");
 
             var timer = new Stopwatch();
@@ -358,7 +360,7 @@ namespace DIPSCrewPlanner
                         var trimmedName = driverName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 5].Text;
 
-                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        if (!currentStaff.Any(p => p.DisplayName.Equals(trimmedName, StringComparison.InvariantCultureIgnoreCase) && p.UnitName.Equals(unit, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, driverName, startTime, endTime);
                             if (result)
@@ -374,7 +376,7 @@ namespace DIPSCrewPlanner
                         var trimmedName = attendantName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 7].Text;
 
-                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        if (!currentStaff.Any(p => p.DisplayName.Equals(trimmedName, StringComparison.InvariantCultureIgnoreCase) && p.UnitName.Equals(unit, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, attendantName, startTime, endTime);
                             if (result)
