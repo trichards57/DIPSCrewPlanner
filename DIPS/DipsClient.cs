@@ -12,10 +12,9 @@ namespace DIPSCrewPlanner.DIPS
 {
     internal class DipsClient : IDisposable
     {
+        private readonly Dictionary<string, int> _cachedDipsValues = new Dictionary<string, int>();
         private readonly Credentials _creds;
         private readonly Regex CyclingHoursRegex = new Regex(@"Cycle responder operational hours<\/td>.+?([\d\.]+) Hrs<\/td>", RegexOptions.Compiled | RegexOptions.Singleline);
-
-        private Dictionary<string, int> _cachedDipsValues = new Dictionary<string, int>();
         private HttpClient _client;
         private IBrowsingContext _context;
         private HttpClientHandler _handler;
