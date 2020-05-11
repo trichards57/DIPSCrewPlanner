@@ -263,6 +263,7 @@
     <Compile Include="DIPS\DipsClient.cs" />
     <Compile Include="Model\HubDetails.cs" />
     <Compile Include="Model\Person.cs" />
+    <Compile Include="Model\Unit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

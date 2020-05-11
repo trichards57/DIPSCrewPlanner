@@ -226,8 +226,15 @@ namespace DIPSCrewPlanner
                 if (wmrClient == null)
                     return;
 
-                var swrResult = await swrClient.GetEMTs();
-                var wmrResult = await wmrClient.GetEMTs();
+                var swrResult = (await swrClient.GetEMTs()).ToList();
+                var swrUnits = (await swrClient.GetUnits()).ToDictionary(u => u.Name, u => u.Id);
+                var wmrResult = (await wmrClient.GetEMTs()).ToList();
+                var wmrUnits = (await wmrClient.GetUnits()).ToDictionary(u => u.Name, u => u.Id);
+
+                foreach (var person in swrResult)
+                    person.UnitId = swrUnits[person.UnitName];
+                foreach (var person in wmrResult)
+                    person.UnitId = wmrUnits[person.UnitName];
 
                 var people = Enumerable.Concat(swrResult, wmrResult).ToList();
 
@@ -264,6 +271,7 @@ namespace DIPSCrewPlanner
                     cacheSheet.Range[$"D{currentRow}"].Value = person.UnitName;
                     cacheSheet.Range[$"E{currentRow}"].Value = person.FirstName;
                     cacheSheet.Range[$"F{currentRow}"].Value = person.LastName;
+                    cacheSheet.Range[$"G{currentRow}"].Value = person.UnitId;
                 }
 
                 Application.Names.Add(PeopleNamesArea, cacheSheet.Range[$"A1:A{currentRow}"]);
@@ -281,6 +289,8 @@ namespace DIPSCrewPlanner
 
         public async void UploadSheetToDips()
         {
+            Application.ActiveWorkbook.Save();
+
             _telemetryClient.TrackEvent("Started uploading sheet");
 
             var timer = new Stopwatch();
@@ -350,7 +360,7 @@ namespace DIPSCrewPlanner
                         var trimmedName = driverName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 5].Text;
 
-                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        if (!currentStaff.Any(p => p.DisplayName.Equals(trimmedName, StringComparison.InvariantCultureIgnoreCase) && p.UnitName.Equals(unit, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, driverName, startTime, endTime);
                             if (result)
@@ -366,7 +376,7 @@ namespace DIPSCrewPlanner
                         var trimmedName = attendantName.Trim(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ' });
                         var unit = row.Cells[1, 7].Text;
 
-                        if (!currentStaff.Any(p => p.DisplayName == trimmedName && p.UnitName == unit))
+                        if (!currentStaff.Any(p => p.DisplayName.Equals(trimmedName, StringComparison.InvariantCultureIgnoreCase) && p.UnitName.Equals(unit, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             var result = await AddVolunteer(hub.DipsContext == DipsContext.SWR ? swrClient : wmrClient, dipsId, attendantName, startTime, endTime);
                             if (result)
@@ -433,12 +443,13 @@ namespace DIPSCrewPlanner
         private async Task<bool> AddVolunteer(DipsClient client, int dipsId, string volunteerName, DateTime startTime, DateTime endTime)
         {
             var driverId = FindVolunteerId(volunteerName);
+            var unitId = FindVolunteerUnitId(volunteerName);
 
             Debug.WriteLine($"Adding volunteer : {driverId}");
 
             if (driverId != 0)
             {
-                var res = await client.AddVolunteer(dipsId, driverId, "ETA", startTime, endTime);
+                var res = await client.AddVolunteer(dipsId, driverId, "ETA", unitId, startTime, endTime);
 
                 if (!res)
                 {
@@ -469,6 +480,27 @@ namespace DIPSCrewPlanner
                 if (name.Equals(personName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     var parseSuccess = int.TryParse(row.Cells[1, 2].Text, out int resultId);
+
+                    if (parseSuccess)
+                        return resultId;
+                    return 0;
+                }
+            }
+
+            return 0;
+        }
+
+        private int FindVolunteerUnitId(string name)
+        {
+            Worksheet sheet = Application.Worksheets[PeopleCacheSheetName];
+
+            foreach (var row in sheet.UsedRange.Rows.OfType<Range>())
+            {
+                var personName = row.Cells[1, 1].Text as string;
+
+                if (name.Equals(personName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var parseSuccess = int.TryParse(row.Cells[1, 7].Text, out int resultId);
 
                     if (parseSuccess)
                         return resultId;

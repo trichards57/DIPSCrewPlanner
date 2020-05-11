@@ -12,10 +12,9 @@ namespace DIPSCrewPlanner.DIPS
 {
     internal class DipsClient : IDisposable
     {
+        private readonly Dictionary<string, int> _cachedDipsValues = new Dictionary<string, int>();
         private readonly Credentials _creds;
         private readonly Regex CyclingHoursRegex = new Regex(@"Cycle responder operational hours<\/td>.+?([\d\.]+) Hrs<\/td>", RegexOptions.Compiled | RegexOptions.Singleline);
-
-        private Dictionary<string, int> _cachedDipsValues = new Dictionary<string, int>();
         private HttpClient _client;
         private IBrowsingContext _context;
         private HttpClientHandler _handler;
@@ -50,12 +49,13 @@ namespace DIPSCrewPlanner.DIPS
             }
         }
 
-        public async Task<bool> AddVolunteer(int eventId, int volunteerId, string role, DateTime startTime, DateTime endTime)
+        public async Task<bool> AddVolunteer(int eventId, int volunteerId, string role, int unitId, DateTime startTime, DateTime endTime)
         {
             var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/CountMeInService.asp?duty={eventId}&type=add");
             var parameters = new Dictionary<string, string>() {
                 { "DutyLinkNumber", eventId.ToString() },
                 {"MemberLinkNumber", volunteerId.ToString() },
+                {"DivisionLink", unitId.ToString() },
                 {"Role", role },
                 {"StartDate", startTime.ToString("dd/MM/yyyy") },
                 {"StartTime", startTime.ToString("HH:mm") },
@@ -251,6 +251,48 @@ namespace DIPSCrewPlanner.DIPS
             var success = decimal.TryParse(hoursString, out var hours);
 
             return success ? hours : 0;
+        }
+
+        public async Task<IEnumerable<Unit>> GetUnits()
+        {
+            var uri = new Uri("https" + $"://dips.sja.org.uk/{(_usingSwr ? "SWR" : "WMR")}/DivisionManagement.asp");
+            var result = await _client.GetAsync(uri);
+
+            if (!result.IsSuccessStatusCode)
+                return Enumerable.Empty<Unit>();
+
+            var pageContent = await result.Content.ReadAsStringAsync();
+
+            var config = Configuration.Default;
+            var context = BrowsingContext.New(config);
+            var document = await context.OpenAsync(r => r.Content(pageContent));
+
+            var tableRows = document.QuerySelectorAll("table.normal tr");
+
+            var unitList = new List<Unit>();
+
+            foreach (IHtmlTableRowElement row in tableRows.Skip(2))
+            {
+                if (row.Children.Length != 8)
+                    continue;
+
+                var unitName = row.Children[3].TextContent;
+                var unitIdParts = row.Children[2].Attributes["onclick"].Value.Split(new[] { "(", ")" }, StringSplitOptions.RemoveEmptyEntries);
+                var idParseSuccess = int.TryParse(unitIdParts[1], out var idNumber);
+
+                if (!idParseSuccess)
+                    continue;
+
+                var unit = new Unit
+                {
+                    Id = idNumber,
+                    Name = unitName
+                };
+
+                unitList.Add(unit);
+            }
+
+            return unitList;
         }
 
         public async Task<bool> Login(bool useSwr)
